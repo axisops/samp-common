@@ -412,8 +412,9 @@ def distro_key(release: dict, fmt: str) -> str:
 
     <os-release ID>:<VERSION_CODENAME> on dpkg systems, <ID>:<major
     VERSION_ID> on rpm systems, alpine:<major.minor> or alpine:edge on Alpine.
-    A pack whose table needs more (php2shell's "/<branch>") appends it to this
-    key itself; fixed_version_status takes any key.
+    A pack whose table needs more (a key carrying a branch, say the
+    runtime's "/<branch>") appends it to this key itself;
+    fixed_version_status takes any key.
     """
     distro = release.get("ID", "")
     version_id = release.get("VERSION_ID", "")

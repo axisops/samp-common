@@ -4,10 +4,9 @@ Run from the repository root:
 
     python3 -m unittest discover -s tests -v
 
-The comparison cases are the union of the brotli (CVE-2026-111497) and
-php2shell (CVE-2026-109618-109619) packs' suites, where these comparators
-were first written, plus the polkit, OpenSSH and xz versions the older packs
-judge.
+The comparison cases are the union of two packs' suites, where these
+comparators were first written, plus the polkit, OpenSSH and xz versions
+the older packs judge.
 
 Agreement with the real tools: the dpkg cases are checked against
 dpkg --compare-versions when dpkg is installed. With SAMP_REAL_TOOLS=docker
@@ -222,7 +221,7 @@ class FixedVersionStatus(unittest.TestCase):
     TABLE = {
         "ubuntu:noble": "1.1.0-2ubuntu0.1",
         "rhel:9": None,
-        # php2shell's key shape: <distro key>/<PHP branch>.
+        # A branch-carrying key shape: <distro key>/<branch>.
         "ubuntu:noble/8.3": "8.3.6-0ubuntu0.24.04.13",
         "alpine:3.24/8.4": "8.4.27-r0",
     }
