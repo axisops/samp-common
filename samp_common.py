@@ -29,7 +29,7 @@ import re
 import sys
 from pathlib import Path
 
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 
 # ------------------------------------------------------------ exit codes --
 #

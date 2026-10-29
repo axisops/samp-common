@@ -119,6 +119,21 @@ class Manifest(unittest.TestCase):
                 self.assertIs(value, False)
 
 
+class Tree(unittest.TestCase):
+    def test_no_compiled_python_is_tracked(self):
+        # Bytecode is not reviewable and need not match the source beside
+        # it; it never ships in a pack. Checked against git's index, because
+        # running this suite legitimately creates local __pycache__.
+        result = subprocess.run(["git", "-C", str(ROOT), "ls-files",
+                                 "*.pyc", "*__pycache__*"],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            self.skipTest("not a git checkout")
+        self.assertEqual(result.stdout.strip(), "",
+                         "compiled Python is tracked; git rm --cached it "
+                         "and ignore __pycache__/")
+
+
 class Vendored(unittest.TestCase):
     def test_samp_common_matches_the_manifest(self):
         path = ROOT / VENDORED["path"]
