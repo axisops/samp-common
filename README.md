@@ -51,8 +51,8 @@ its `samp.yaml`:
   vendored:
     samp_common:
       path: <role_name>/files/samp_common.py
-      version: 1.0.0
-      sha256: 0d0ca2792c188f1161133fe51e9dfca53759580cbb0c256f3ebdbfea59fdc915
+      version: 1.0.1
+      sha256: 63089827aff2ee8af02d069c4876b38982b114d5113bf01af93442f2f4069edb
 ```
 
 The pack's tests fail if the copy's hash differs, and the substrate's linter
@@ -69,7 +69,8 @@ python3 scripts/vendor.py --check ../CVE-*                # exit 1 if any pack d
 
 | Version | Tag | `samp_common.py` sha256 |
 |---|---|---|
-| 1.0.0 | `samp/v1.0.0` | `0d0ca2792c188f1161133fe51e9dfca53759580cbb0c256f3ebdbfea59fdc915` |
+| 1.0.1 | `samp/v1.0.1` | `63089827aff2ee8af02d069c4876b38982b114d5113bf01af93442f2f4069edb` |
+| 1.0.0 | `samp/v1.0.0` | `86355590e91434cc41162caa50ed26283c6d5bb375c0a57239dcbe9e18503474` |
 
 Releases are SSH-signed annotated tags `samp/v<version>`, signed with a
 hardware-backed key, the same scheme as the packs. The substrate imports a
