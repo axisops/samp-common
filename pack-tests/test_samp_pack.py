@@ -239,6 +239,28 @@ class ApplyEntry(unittest.TestCase):
                          f"exactly one invocation may print the result line, "
                          f"found {emitters}")
 
+    def test_apt_calls_suspend_needrestart(self):
+        # Ubuntu's needrestart apt hook stops and starts units on its own,
+        # which contradicts restarts: [] with the restart option off (the
+        # 2026-10-29 gate, defect 4). Every apt invocation in an apply, in a
+        # task or in the script, suspends it.
+        path = ROLE / "tasks" / SPEC["apply"]["tasks_from"]
+        for task in flatten(tasks(path)):
+            module = module_of(task)
+            if module.split(".")[-1] not in {"apt", "package"}:
+                continue
+            with self.subTest(task=task.get("name")):
+                env = task.get("environment") or {}
+                self.assertEqual(str(env.get("NEEDRESTART_SUSPEND")), "1",
+                                 "an apt or package task must set "
+                                 "NEEDRESTART_SUSPEND=1 in its environment")
+        scripts = [p for p in (ROLE / "files").glob("*_mitigator.py")]
+        self.assertEqual(len(scripts), 1)
+        source = scripts[0].read_text()
+        if "apt-get" in source:
+            self.assertIn("NEEDRESTART_SUSPEND", source,
+                          "a script that runs apt-get must suspend needrestart")
+
 
 class DetectionRun(unittest.TestCase):
     """The script itself, run the way detect.yml runs it."""
