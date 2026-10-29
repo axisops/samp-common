@@ -318,6 +318,15 @@ class ResultLine(unittest.TestCase):
         body = sc.parse_result_line(out.getvalue().strip())
         self.assertEqual((body["mode"], body["workaround"]), ("apply", True))
 
+    def test_finish_with_emit_false_prints_nothing(self):
+        # A pre-apply detection inside an apply step: the exit code still
+        # carries the verdict, but the step's one result line is the apply's.
+        out = io.StringIO()
+        rc = sc.finish("p", ["CVE-1"], False, "vulnerable", {"n": 1},
+                       stream=out, emit=False)
+        self.assertEqual(rc, 2)
+        self.assertEqual(out.getvalue(), "")
+
 
 class Config(unittest.TestCase):
     def test_stdin_json(self):

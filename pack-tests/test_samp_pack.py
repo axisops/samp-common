@@ -193,6 +193,9 @@ class DetectEntry(unittest.TestCase):
             self.assertNotIn("--apply", argv)
             self.assertNotIn("--restart", argv)
             self.assertNotIn("--restore", argv)
+            # A detect step's one result line IS the detection's; suppressing
+            # it here would leave the step with nothing to read.
+            self.assertNotIn("--no-result-line", argv)
             self.assertIn("rc not in [0, 2]", str(task["failed_when"]))
 
     def test_no_bytecode_written_by_any_task(self):
@@ -200,6 +203,41 @@ class DetectEntry(unittest.TestCase):
         top = tasks(ROLE / "tasks" / SPEC["detect"]["tasks_from"])
         self.assertEqual(len(top), 1)
         self.assertEqual(top[0]["environment"]["PYTHONDONTWRITEBYTECODE"], "1")
+
+
+class ApplyEntry(unittest.TestCase):
+    """The one-result-line rule: the substrate reads exactly one SAMP-RESULT
+    line per step, so an apply entry may let only its apply invocation print
+    one. Every other run of the script inside the apply entry (a pre-apply
+    detection, a verify) must carry --no-result-line."""
+
+    @staticmethod
+    def script_invocations():
+        path = ROLE / "tasks" / SPEC["apply"]["tasks_from"]
+        for task in flatten(tasks(path)):
+            body = task.get("command") or task.get("ansible.builtin.command")
+            if body is None:
+                continue
+            text = str(body)
+            if "_mitigator.py" in text or "script_dest" in text:
+                yield task.get("name"), text
+
+    def test_only_the_apply_invocation_prints_a_result_line(self):
+        invocations = list(self.script_invocations())
+        self.assertTrue(invocations, "the apply entry never runs the script")
+        emitters = []
+        for name, text in invocations:
+            with self.subTest(task=name):
+                if "--no-result-line" in text:
+                    continue
+                emitters.append(name)
+                self.assertIn("--apply", text,
+                              "an invocation without --apply must carry "
+                              "--no-result-line, or the step prints two "
+                              "SAMP-RESULT lines and the substrate refuses it")
+        self.assertEqual(len(emitters), 1,
+                         f"exactly one invocation may print the result line, "
+                         f"found {emitters}")
 
 
 class DetectionRun(unittest.TestCase):
@@ -224,6 +262,22 @@ class DetectionRun(unittest.TestCase):
         self.assertEqual(body["cves"], SPEC["cves"])
         self.assertEqual(body["backups"], [])
         self.assertEqual(samp_common.exit_code(body["verdict"]), result.returncode)
+
+    def test_no_result_line_flag_suppresses_the_line(self):
+        config = json.loads((ROOT / "tests" / "samp_smoke_config.json").read_text())
+        scripts = [p for p in (ROLE / "files").glob("*_mitigator.py")]
+        self.assertEqual(len(scripts), 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+            result = subprocess.run(
+                [sys.executable, str(scripts[0]), "--config", "-",
+                 "--no-result-line"],
+                input=json.dumps(config), capture_output=True, text=True,
+                cwd=tmp, env=env, timeout=120)
+        self.assertIn(result.returncode, (0, 2), result.stderr)
+        for line in result.stdout.splitlines():
+            self.assertFalse(line.startswith(samp_common.RESULT_PREFIX),
+                             "--no-result-line must suppress the result line")
 
 
 if __name__ == "__main__":

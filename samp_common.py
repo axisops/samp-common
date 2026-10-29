@@ -29,7 +29,7 @@ import re
 import sys
 from pathlib import Path
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 # ------------------------------------------------------------ exit codes --
 #
@@ -120,12 +120,19 @@ def parse_result_line(line: str) -> dict:
 
 
 def finish(pack: str, cves, apply: bool, verdict: str, counters: dict,
-           backups=(), workaround: bool = False, stream=None) -> int:
-    """Print the result line and return the exit code for verdict."""
-    stream = stream or sys.stdout
-    print(result_line(pack, cves, "apply" if apply else "detect", verdict,
-                      counters, backups, workaround), file=stream)
-    stream.flush()
+           backups=(), workaround: bool = False, stream=None,
+           emit: bool = True) -> int:
+    """Print the result line and return the exit code for verdict.
+
+    emit=False returns the exit code without printing the line. A pre-apply
+    detection run inside an apply step uses it: the substrate reads exactly
+    one SAMP-RESULT line per step, and that step's line is the apply's.
+    """
+    if emit:
+        stream = stream or sys.stdout
+        print(result_line(pack, cves, "apply" if apply else "detect", verdict,
+                          counters, backups, workaround), file=stream)
+        stream.flush()
     return exit_code(verdict)
 
 
